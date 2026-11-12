@@ -121,3 +121,11 @@ git push -u origin main
 
 - 起名风格：前端加一组单选（国风 / 现代简约 / 英文名），拼进 `requirement` 一起发给后端；
 - 新模型：在 `modelConfigMap` 里加一条 `{ baseURL, apiKey, model }`，前端加一个 `<option>`，其他代码不动。
+
+## 本次实际部署记录（2026-11-12）
+
+- 代码仓库：https://github.com/JackZ330/ai-naming-platform （public，main 分支）
+- 线上地址：https://ai-naming-platform-rouge.vercel.app （README 里只需 3 个变量即可跑通：`SUPABASE_URL`、`SUPABASE_ANON_KEY`、`DEEPSEEK_API_KEY`，已在 Vercel Production 环境配置）
+- Supabase：表 `name_history` 已建，含索引、RLS 与两条演示策略；线上每次生成都会写入一行
+- 未配置豆包 / 千问 / Kimi 的密钥，页面选择这三个模型时会提示“密钥未配置”，属预期行为
+- Vercel 的 Deployment Protection（Vercel Authentication）已关闭，否则 `*.vercel.app` 链接打开会跳登录页
