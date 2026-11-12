@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI 起名平台 · 多模型</title>
+<style>
+  :root {
+    --paper: #faf8f4;
+    --card: #ffffff;
+    --ink: #1f2422;
+    --ink-soft: #5f6b66;
+    --line: #e4ded4;
+    --accent: #2f6b5e;
+    --accent-soft: #eaf2ef;
+    --warn: #a4632a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+    line-height: 1.75;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 48px 20px 80px; }
+  header { margin-bottom: 32px; }
+  .eyebrow { font-size: 13px; letter-spacing: 2px; color: var(--ink-soft); }
+  h1 { font-size: 30px; margin: 8px 0 10px; font-weight: 600; letter-spacing: 1px; }
+  .sub { color: var(--ink-soft); font-size: 15px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 22px;
+    margin-bottom: 20px;
+  }
+  .label { font-size: 13px; color: var(--ink-soft); margin-bottom: 8px; display: block; }
+  textarea, select, button { font-family: inherit; font-size: 15px; }
+  textarea {
+    width: 100%;
+    min-height: 96px;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    resize: vertical;
+    background: #fffdfa;
+    color: var(--ink);
+    outline: none;
+  }
+  textarea:focus, select:focus { border-color: var(--accent); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .chip {
+    border: 1px solid var(--line);
+    background: #fffdfa;
+    color: var(--ink-soft);
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .row { display: flex; gap: 12px; align-items: flex-end; margin-top: 16px; flex-wrap: wrap; }
+  .field { flex: 1; min-width: 180px; }
+  select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fffdfa;
+    color: var(--ink);
+    outline: none;
+  }
+  button.primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 11px 26px;
+    cursor: pointer;
+    letter-spacing: 1px;
+  }
+  button.primary:disabled { opacity: .5; cursor: not-allowed; }
+  button.ghost {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    border-radius: 10px;
+    padding: 10px 18px;
+    cursor: pointer;
+  }
+  .status { font-size: 13px; color: var(--ink-soft); margin-top: 12px; min-height: 20px; }
+  .status.err { color: var(--warn); }
+  .output {
+    white-space: pre-wrap;
+    word-break: break-word;
+    min-height: 180px;
+    padding: 16px;
+    background: #fffdfa;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-size: 16px;
+  }
+  .output.placeholder { color: #a9a29a; }
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 16px;
+    background: var(--accent);
+    vertical-align: -2px;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .hist-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .hist-head h2 { font-size: 16px; font-weight: 600; margin: 0; }
+  .hist-item { border-top: 1px solid var(--line); padding: 12px 0; font-size: 14px; }
+  .hist-item:first-child { border-top: none; }
+  .hist-meta { color: var(--ink-soft); font-size: 12.5px; margin-bottom: 4px; }
+  .hist-req { color: var(--ink-soft); margin-bottom: 6px; }
+  .hist-res { white-space: pre-wrap; word-break: break-word; color: var(--ink); }
+  .badge {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: 999px;
+    padding: 1px 9px;
+    font-size: 12px;
+    margin-right: 8px;
+  }
+  .empty { color: var(--ink-soft); font-size: 14px; padding: 16px 0; }
+  footer { color: var(--ink-soft); font-size: 12.5px; text-align: center; margin-top: 40px; }
+  @media (max-width: 600px) {
+    .wrap { padding: 28px 16px 60px; }
+    h1 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">练 习 三 · 多 模 型 版</div>
+    <h1>AI 起名平台</h1>
+    <div class="sub">输入需求，选择模型，名字与寓意逐字生成，结果自动存入历史。</div>
+  </header>
+
+  <div class="card">
+    <label class="label" for="requirement">起名需求</label>
+    <textarea id="requirement" placeholder="例如：男孩，国风，简约，希望字义有君子之意"></textarea>
+    <div class="chips">
+      <span class="chip" data-fill="男孩，国风，简约">男孩 · 国风 · 简约</span>
+      <span class="chip" data-fill="女孩，温柔，有诗意，出自诗经">女孩 · 诗经 · 温柔</span>
+      <span class="chip" data-fill="中性名，现代简约，两个字，好写好记">中性名 · 现代简约</span>
+      <span class="chip" data-fill="英文名，男孩，与中文名谐音">英文名 · 谐音</span>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label class="label" for="model">选择模型</label>
+        <select id="model">
+          <option value="doubao">豆包（火山方舟）</option>
+          <option value="deepseek">DeepSeek</option>
+          <option value="qwen">通义千问</option>
+          <option value="kimi">Kimi</option>
+        </select>
+      </div>
+      <button class="primary" id="submit">生成名字</button>
+      <button class="ghost" id="stop" disabled>停止</button>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="card">
+    <label class="label">生成结果</label>
+    <div class="output placeholder" id="output">名字与寓意会在这里逐字出现。</div>
+  </div>
+
+  <div class="card">
+    <div class="hist-head">
+      <h2>起名历史</h2>
+      <button class="ghost" id="refresh">刷新</button>
+    </div>
+    <div id="history"><div class="empty">暂无记录</div></div>
+  </div>
+
+  <footer>练习三 · Node + Vercel + Supabase + SSE 流式输出</footer>
+</div>
+
+<script>
+const outputEl = document.getElementById('output')
+const statusEl = document.getElementById('status')
+const submitEl = document.getElementById('submit')
+const stopEl = document.getElementById('stop')
+const refreshEl = document.getElementById('refresh')
+const historyEl = document.getElementById('history')
+const requirementEl = document.getElementById('requirement')
+const modelEl = document.getElementById('model')
+
+const MODEL_LABEL = {
+  doubao: '豆包（火山方舟）',
+  deepseek: 'DeepSeek',
+  qwen: '通义千问',
+  kimi: 'Kimi'
+}
+
+let controller = null
+let pending = ''   // SSE 缓冲区，跨网络分片保留半条事件
+
+document.querySelectorAll('.chip').forEach((chip) => {
+  chip.addEventListener('click', () => {
+    requirementEl.value = chip.dataset.fill
+    requirementEl.focus()
+  })
+})
+
+function setStatus(text, isError) {
+  statusEl.textContent = text || ''
+  statusEl.className = isError ? 'status err' : 'status'
+}
+
+function resetOutput() {
+  outputEl.textContent = ''
+  outputEl.classList.remove('placeholder')
+  pending = ''
+}
+
+function appendText(text) {
+  outputEl.textContent += text
+  outputEl.scrollTop = outputEl.scrollHeight
+}
+
+/** 解析一条 SSE 事件文本，返回要追加的文字 */
+function parseEvent(raw) {
+  const line = raw.trim()
+  if (!line.startsWith('data:')) return ''
+  const payload = line.slice(5).trim()
+  if (!payload) return ''
+
+  let json
+  try {
+    json = JSON.parse(payload)
+  } catch (e) {
+    return ''
+  }
+  if (json.error) {
+    appendText('\n[出错] ' + json.error)
+    setStatus(json.error, true)
+    return ''
+  }
+  if (json.warning) {
+    setStatus(json.warning, false)
+    return ''
+  }
+  if (json.delta) return json.delta
+  return ''
+}
+
+async function generate() {
+  const requirement = requirementEl.value.trim()
+  const model = modelEl.value
+
+  if (!requirement) {
+    setStatus('请先填写起名需求', true)
+    requirementEl.focus()
+    return
+  }
+
+  resetOutput()
+  setStatus('正在连接 ' + MODEL_LABEL[model] + ' …')
+  submitEl.disabled = true
+  stopEl.disabled = false
+  controller = new AbortController()
+
+  let started = false
+
+  try {
+    const resp = await fetch('/api/name', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requirement, model }),
+      signal: controller.signal
+    })
+
+    if (!resp.ok) {
+      let msg = '请求失败：HTTP ' + resp.status
+      try {
+        const data = await resp.json()
+        if (data && data.error) msg = data.error
+      } catch (e) {}
+      throw new Error(msg)
+    }
+    if (!resp.body) throw new Error('当前浏览器不支持流式读取')
+
+    const reader = resp.body.getReader()
+    const decoder = new TextDecoder('utf-8')
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      pending += decoder.decode(value, { stream: true })
+      const parts = pending.split('\n\n')
+      pending = parts.pop()
+
+      for (const part of parts) {
+        const text = parseEvent(part)
+        if (text) {
+          if (!started) {
+            started = true
+            setStatus(MODEL_LABEL[model] + ' 正在生成 …')
+          }
+          appendText(text)
+        }
+      }
+    }
+
+    if (!outputEl.textContent.trim()) {
+      setStatus('没有收到生成内容，请检查密钥与环境变量', true)
+    } else {
+      setStatus('生成完成，已写入历史记录')
+      loadHistory()
+    }
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      setStatus('已停止生成，已生成的部分仍会保存')
+    } else {
+      setStatus(err.message || String(err), true)
+    }
+  } finally {
+    submitEl.disabled = false
+    stopEl.disabled = true
+    controller = null
+  }
+}
+
+async function loadHistory() {
+  historyEl.innerHTML = '<div class="empty">加载中 …</div>'
+  try {
+    const resp = await fetch('/api/history?limit=20')
+    const data = await resp.json()
+    const records = data.records || []
+
+    if (data.error) {
+      historyEl.innerHTML = '<div class="empty">读取失败：' + escapeHtml(data.error) + '（请检查 RLS 策略）</div>'
+      return
+    }
+    if (!records.length) {
+      historyEl.innerHTML = '<div class="empty">暂无记录，生成一次后刷新查看</div>'
+      return
+    }
+
+    historyEl.innerHTML = records.map((r) => {
+      const time = (r.created_at || '').replace('T', ' ').slice(0, 16)
+      return '<div class="hist-item">' +
+        '<div class="hist-meta"><span class="badge">' + escapeHtml(MODEL_LABEL[r.model_name] || r.model_name) + '</span>' + escapeHtml(time) + '</div>' +
+        '<div class="hist-req">需求：' + escapeHtml(r.user_requirement) + '</div>' +
+        '<div class="hist-res">' + escapeHtml(r.name_result) + '</div>' +
+        '</div>'
+    }).join('')
+  } catch (err) {
+    historyEl.innerHTML = '<div class="empty">读取失败：' + escapeHtml(err.message) + '</div>'
+  }
+}
+
+function escapeHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+submitEl.addEventListener('click', generate)
+
+stopEl.addEventListener('click', () => {
+  if (controller) controller.abort()
+})
+
+refreshEl.addEventListener('click', loadHistory)
+
+requirementEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) generate()
+})
+
+loadHistory()
+</script>
+</body>
+</html>
